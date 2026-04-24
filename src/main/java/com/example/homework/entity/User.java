@@ -1,0 +1,53 @@
+package com.example.homework.entity;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+public class User {
+
+    /**
+     * 主键ID
+     */
+    private Long id;
+
+    /**
+     * 账号
+     */
+    private String username;
+
+    /**
+     * 密码
+     */
+    private String password;
+
+    /**
+     * 真实姓名
+     */
+    private String name;
+
+    /**
+     * 头像图片
+     */
+    private String img;
+
+    /**
+     * 角色ID 1-管理员 2-老师 3-学生
+     */
+    private Long roleId;
+
+    /**
+     * 班级ID（学生才有）
+     */
+    private Long classId;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
+}

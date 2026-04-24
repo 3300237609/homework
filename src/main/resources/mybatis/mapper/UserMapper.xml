@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 对应Mapper接口的全路径 -->
+<mapper namespace="com.example.homework.mapper.UserMapper">
+
+    <!-- 根据username查询用户 -->
+    <select id="getUserByUsername" resultType="boolean">
+        SELECT  count(name) > 0 FROM user where username = #{username}
+    </select>
+    <!-- 登录查询 -->
+    <select id="login" resultType="com.example.homework.entity.User">
+        SELECT
+            id, img, name, role_id, class_id
+        FROM
+            user
+        WHERE
+            username = #{username}
+          and
+            password = #{password}
+    </select>
+
+    <!-- 插入一条用户数据   -->
+    <insert id="register"  parameterType="com.example.homework.entity.User">
+        INSERT INTO
+            user
+            (username, password, name, role_id, class_id, create_time, update_time)
+        VALUES
+            (#{username}, #{password}, #{name}, #{roleId}, #{classId}, NOW(), NOW())
+    </insert>
+</mapper>
