@@ -16,8 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor())
-                .addPathPatterns("")
-                .excludePathPatterns("/login","register"); // 登录接口放行
+                .addPathPatterns("/**")
+                .excludePathPatterns("/user/login","/user/register"); // 登录接口放行
                                                                 // 拦截所有以/user/和/book/开头的路径（包括子路径）
                                                                 //.addPathPatterns("/user/**", "/book/**")
                                                                 // 可选：排除某些不需要拦截的子路径（例如登录接口）

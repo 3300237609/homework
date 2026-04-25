@@ -4,15 +4,19 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.example.homework.common.R;
+import com.example.homework.common.UserContextHolder;
 import com.example.homework.entity.User;
 import com.example.homework.mapper.UserMapper;
 import com.example.homework.service.UserService;
 import com.example.homework.utils.JwtUtil;
+import com.example.homework.utils.PermissionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 @Service
 public class UserserviceImpl implements UserService {
@@ -54,7 +58,7 @@ public class UserserviceImpl implements UserService {
                 || StrUtil.isBlank(user.getPassword())
                 || StrUtil.isBlank(user.getName())
                 || user.getRoleId() == null
-                || user.getClassId() == null
+                || user.getClazzId() == null
         ) {
             return R.error("数据异常！");
         }
@@ -72,5 +76,69 @@ public class UserserviceImpl implements UserService {
             return R.error("注册失败！");
         }
         return R.success("OK!");
+    }
+
+    @Override
+    public R<ArrayList<User>> getUserList(String role, String clazz, Integer pageNum, Integer pageSize) {
+
+        if (!PermissionUtil.isAdmin()){
+            return R.error("权限不足！");
+        }
+        // 提前计算偏移量：(页码-1)*每页条数
+        Integer offset = (pageNum - 1) * pageSize;
+        return R.success(userMapper.getUserList(role, clazz, offset, pageSize));
+    }
+
+    @Override
+    public R<String> addUser(ArrayList<User> users) {
+        if (!PermissionUtil.isAdmin()){
+            return R.error("权限不足！");
+        }
+
+        ArrayList<User> usersOut = new ArrayList<>();
+        Iterator<User> iterator = users.iterator();
+        while (iterator.hasNext()) {
+            User user = iterator.next();
+            if (user.getUsername().isEmpty()){
+                iterator.remove();
+                usersOut.add(user);
+                continue;
+            }
+            if (userMapper.getUserByUsername(user.getUsername())) {
+                usersOut.add(user);
+                iterator.remove();
+            }
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                user.setPassword("123456");
+            }
+        }
+        if (!users.isEmpty()){
+            for (User user : users){
+                user.setPassword(SecureUtil.md5(user.getPassword()));
+            }
+            userMapper.addUser(users);
+        }
+        boolean success = usersOut.isEmpty();
+        return success ? R.success("新增用户成功") : R.error("有"+users.size()+"条成功！有"+usersOut.size()+"条昵称重复添加失败："+usersOut);
+    }
+
+    @Override
+    public R<String> updateUser(User users) {
+        if (!PermissionUtil.isAdmin()){
+            return R.error("权限不足！");
+        }
+        users.setId(Long.valueOf(UserContextHolder.getUserId()));
+        return userMapper.updateUser(users)? R.success("更新成功！") : R.error("更新失败！");
+    }
+
+    @Override
+    public R<String> deleteUser(Long id) {
+        if (!PermissionUtil.isAdmin()){
+            return R.error("权限不足！");
+        }
+        if (id == null){
+            return R.error("数据为空！");
+        }
+        return userMapper.deleteUser(id) ? R.success("删除成功！") : R.error("删除失败！");
     }
 }

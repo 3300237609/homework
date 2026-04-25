@@ -7,26 +7,118 @@
 
     <!-- 根据username查询用户 -->
     <select id="getUserByUsername" resultType="boolean">
-        SELECT  count(name) > 0 FROM user where username = #{username}
+        SELECT count(name) > 0
+        FROM user
+        where username = #{username}
     </select>
     <!-- 登录查询 -->
     <select id="login" resultType="com.example.homework.entity.User">
-        SELECT
-            id, img, name, role_id, class_id
-        FROM
-            user
-        WHERE
-            username = #{username}
-          and
-            password = #{password}
+        SELECT id,
+               img,
+               name,
+               role_id,
+               clazz_id
+        FROM user
+        WHERE username = #{username}
+          and password = #{password}
     </select>
 
     <!-- 插入一条用户数据   -->
-    <insert id="register"  parameterType="com.example.homework.entity.User">
-        INSERT INTO
-            user
-            (username, password, name, role_id, class_id, create_time, update_time)
-        VALUES
-            (#{username}, #{password}, #{name}, #{roleId}, #{classId}, NOW(), NOW())
+    <insert id="register" parameterType="com.example.homework.entity.User">
+        INSERT INTO user
+            (username, password, name, role_id, clazz_id, create_time, update_time)
+        VALUES (#{username}, #{password}, #{name}, #{roleId}, #{clazzId}, NOW(), NOW())
     </insert>
+
+    <!-- 分页查询用户   -->
+    <select id="getUserList" resultType="com.example.homework.entity.User">
+        SELECT
+        u.id, u.username, u.password, u.name, u.role_id, u.clazz_id,
+        u.create_time, u.update_time, u.img
+        FROM user u
+        LEFT JOIN role r ON u.role_id = r.id
+        <where>
+            <if test="role != null and role != ''">
+                AND r.role_name = #{role}
+            </if>
+            <if test="clazz != null and clazz != ''">
+                AND u.clazz_id = #{clazz}
+            </if>
+        </where>
+        ORDER BY u.create_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}  <!-- 直接用计算好的偏移量 -->
+    </select>
+
+
+    <!-- 批量添加用户   -->
+    <insert id="addUser">
+        INSERT INTO user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            username,
+            password,
+            name,
+            role_id,
+            <foreach collection="users" item="user" index="index" open="" close="" separator="">
+                <if test="index == 0">
+                    <if test="user.clazzId != null">clazz_id,</if>
+                    create_time,
+                    update_time,
+                    <if test="user.img != null and user.img != ''">img,</if>
+                </if>
+            </foreach>
+        </trim>
+        VALUES
+        <foreach collection="users" item="user" separator=",">
+            <trim prefix="(" suffix=")" suffixOverrides=",">
+                #{user.username},
+                #{user.password},
+                #{user.name},
+                #{user.roleId},
+                <if test="user.clazzId != null">#{user.clazzId},</if>
+                NOW(),
+                NOW(),
+                <if test="user.img != null and user.img != ''">#{user.img},</if>
+            </trim>
+        </foreach>
+    </insert>
+
+
+    <!-- 更改用户信息   -->
+    <update id="updateUser">
+        UPDATE user
+        <set>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="roleId != null">
+                role_id = #{roleId},
+            </if>
+            <if test="clazzId != null">
+                clazz_id = #{clazzId},
+            </if>
+            <if test="img != null and img != ''">
+                img = #{img},
+            </if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+
+    <!-- 删除用户   -->
+    <delete id="deleteUser">
+        DELETE
+        FROM user
+        WHERE id = #{id}
+    </delete>
+
+    <select id="checkIsTeacherById" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0
+        FROM user
+        WHERE id = #{id}
+          AND role_id = 2
+    </select>
 </mapper>

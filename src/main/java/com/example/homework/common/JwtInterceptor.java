@@ -41,6 +41,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         // 3. （可选）将用户信息存入请求属性，供后续接口使用
         Claims claims = jwtUtil.parseToken(token);
         UserContextHolder.setUserId((String) claims.get("userId"));
+        UserContextHolder.setRole(claims.get("roleId").toString());
         return true;
     }
 }

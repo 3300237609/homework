@@ -6,38 +6,15 @@ import java.time.LocalDateTime;
 @Data
 public class Homework {
 
-    /**
-     * 作业ID
-     */
     private Long id;
-
-    /**
-     * 作业标题
-     */
-    private String title;
-
-    /**
-     * 作业内容/要求
-     */
-    private String content;
-
-    /**
-     * 发布老师ID
-     */
-    private Long teacherId;
-
-    /**
-     * 发布班级ID
-     */
-    private Long classId;
-
-    /**
-     * 截止时间
-     */
-    private LocalDateTime deadline;
-
-    /**
-     * 创建时间
-     */
+    private String title;        // 作业标题
+    private String content;      // 作业要求
+    private Long teacherId;      // 发布教师
+    private Long clazzId;        // 班级ID
+    private Long courseId;       // 课程ID
+    private Integer scoreTotal;  // 满分
+    private LocalDateTime startTime;  // 开始时间
+    private LocalDateTime deadline;   // 截止时间
     private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }
