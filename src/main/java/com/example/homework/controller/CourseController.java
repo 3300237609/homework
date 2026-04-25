@@ -1,21 +1,43 @@
 package com.example.homework.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.homework.common.R;
+import com.example.homework.entity.Course;
+import com.example.homework.service.CourseService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/course")
 public class CourseController {
-    //GET /list 获取课表 （可按教师/班级筛选）
 
+    @Autowired
+    private CourseService courseService;
 
-    //POST /add 新增课程 （绑定教师、班级）
+    // 列表
+    @GetMapping("/list")
+    public R<List<Course>> list(@RequestParam(required = false) Long teacherId,
+                                @RequestParam(required = false) Long clazzId) {
+        return courseService.list(teacherId, clazzId);
+    }
 
+    // 新增
+    @PostMapping("/add")
+    public R<String> add(@RequestBody Course course) {
+        return courseService.add(course);
+    }
 
-    //PUT /update 修改课程信息 （调整课程名/授课老师/班级）
+    // 修改
+    @PutMapping("/update")
+    public R<String> update(@RequestBody Course course) {
+        return courseService.update(course);
+    }
 
-
-    //DELETE /delete/{id} 删除课程  （需判断是否有作业关联）
-
+    // 删除
+    @DeleteMapping("/delete/{id}")
+    public R<String> delete(@PathVariable Long id) {
+        return courseService.delete(id);
+    }
 
 }
