@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 作业表 Mapper：作业的增删改查 -->
+<mapper namespace="com.example.homework.mapper.HomeworkMapper">
+
+    <!-- 查询所有作业 -->
+    <select id="selectList" resultType="com.example.homework.entity.Homework">
+        SELECT * FROM homework ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据ID查询作业 -->
+    <select id="selectById" parameterType="long" resultType="com.example.homework.entity.Homework">
+        SELECT * FROM homework WHERE id=#{id}
+    </select>
+
+    <!-- 创建作业 -->
+    <insert id="insert" parameterType="com.example.homework.entity.Homework"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id"
+    >
+        INSERT INTO homework(title,content,total_score,teacher_id,clazz_id,course_id,start_time,deadline)
+        VALUES(#{title},#{content},#{totalScore},#{teacherId},#{clazzId},#{courseId},#{startTime},#{deadline})
+    </insert>
+
+    <!-- 修改作业信息 -->
+    <update id="update" parameterType="com.example.homework.entity.Homework">
+        UPDATE homework
+        <set>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="totalScore != null">
+                total_score = #{totalScore},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="deadline != null">
+                deadline = #{deadline},
+            </if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除作业 -->
+    <delete id="delete" parameterType="long">
+        DELETE FROM homework WHERE id=#{id}
+    </delete>
+
+    <!-- 按条件查询教师发布的作业列表 -->
+    <select id="selectListByCondition" resultType="com.example.homework.entity.Homework">
+        SELECT * FROM homework
+        WHERE teacher_id = #{teacherId}
+        <if test="clazzId != null">
+            AND clazz_id = #{clazzId}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询学生视角的作业列表（过滤提交状态） -->
+    <select id="selectStudentHomeworkList" resultType="com.example.homework.entity.Homework">
+        SELECT h.*
+        FROM homework h
+        <where>
+            <!-- 课程 ID 可选 -->
+            <if test="courseId != null">
+                AND h.course_id = #{courseId}
+            </if>
+
+            <!-- 未提交 -->
+            <if test="status != null and status == '0'">
+                AND h.id NOT IN (
+                SELECT homework_id
+                FROM homework_submit
+                WHERE student_id = #{studentId}
+                )
+            </if>
+
+            <!-- 已提交 -->
+            <if test="status != null and status == '1'">
+                AND h.id IN (
+                SELECT homework_id
+                FROM homework_submit
+                WHERE student_id = #{studentId}
+                )
+            </if>
+        </where>
+
+        ORDER BY h.create_time DESC
+    </select>
+
+    <update id="updateTotalScore" parameterType="com.example.homework.entity.Homework">
+        UPDATE homework
+        SET total_score = #{totalScore}
+        WHERE id = #{id}
+    </update>
+</mapper>

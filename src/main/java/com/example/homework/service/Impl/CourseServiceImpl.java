@@ -17,7 +17,6 @@ public class CourseServiceImpl implements CourseService {
     @Autowired
     private CourseMapper courseMapper;
 
-    // ====================== 列表 ======================
     @Override
     public R<List<Course>> list(Long teacherId, Long clazzId) {
         if (!PermissionUtil.isAdminOrTeacher()) {
@@ -27,7 +26,6 @@ public class CourseServiceImpl implements CourseService {
         return R.success(list);
     }
 
-    // ====================== 新增 ======================
     @Override
     public R<String> add(Course course) {
         if (!PermissionUtil.isAdmin()) {
@@ -39,7 +37,6 @@ public class CourseServiceImpl implements CourseService {
         return R.success("新增课程成功");
     }
 
-    // ====================== 修改 ======================
     @Override
     public R<String> update(Course course) {
         if (!PermissionUtil.isAdmin()) {
@@ -50,7 +47,6 @@ public class CourseServiceImpl implements CourseService {
         return R.success("修改课程成功");
     }
 
-    // ====================== 删除 ======================
     @Override
     public R<String> delete(Long id) {
         if (!PermissionUtil.isAdmin()) {

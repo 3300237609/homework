@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 学生作业提交主表 Mapper -->
+<mapper namespace="com.example.homework.mapper.HomeworkSubmitMapper">
+
+    <!-- 根据作业ID 查询所有学生提交记录 -->
+    <select id="selectByHomeworkId" parameterType="long" resultType="com.example.homework.entity.HomeworkSubmit">
+        SELECT * FROM homework_submit WHERE homework_id=#{homeworkId}
+    </select>
+
+    <!-- 根据提交ID 查询单条提交 -->
+    <select id="selectById" parameterType="long" resultType="com.example.homework.entity.HomeworkSubmit">
+        SELECT * FROM homework_submit WHERE id=#{id}
+    </select>
+
+    <!-- 学生提交作业 -->
+    <insert id="insert" parameterType="com.example.homework.entity.HomeworkSubmit"
+            useGeneratedKeys="true"
+            keyProperty="id"
+            keyColumn="id">
+        INSERT INTO homework_submit(homework_id,student_id,status,content)
+        VALUES(#{homeworkId},#{studentId},#{status},#{content})
+    </insert>
+
+    <!-- 老师批改后更新总分和状态 -->
+    <update id="updateScore" parameterType="com.example.homework.entity.HomeworkSubmit">
+        UPDATE homework_submit
+        SET total_score=#{totalScore}, status=#{status}
+        WHERE id=#{id}
+    </update>
+
+    <!-- 根据作业ID和学生ID查询提交记录 -->
+    <select id="selectByHomeworkIdAndStudentId" resultType="com.example.homework.entity.HomeworkSubmit">
+        SELECT * FROM homework_submit
+        WHERE homework_id = #{homeworkId} AND student_id = #{studentId}
+    </select>
+</mapper>

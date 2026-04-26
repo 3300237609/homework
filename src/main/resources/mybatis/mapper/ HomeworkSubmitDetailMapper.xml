@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 学生答题详情 Mapper：每道题的答案和得分 -->
+<mapper namespace="com.example.homework.mapper.HomeworkSubmitDetailMapper">
+
+    <!-- 根据提交ID 查询该学生所有题目的答案 -->
+    <select id="selectBySubmitId" parameterType="long" resultType="com.example.homework.entity.HomeworkSubmitDetail">
+        SELECT * FROM homework_submit_detail WHERE submit_id=#{submitId}
+    </select>
+
+    <!-- 保存学生某一道题的答案 -->
+    <insert id="insert" parameterType="com.example.homework.entity.HomeworkSubmitDetail">
+        INSERT INTO homework_submit_detail
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="submitId != null">submit_id,</if>
+            <if test="questionId != null">question_id,</if>
+            <if test="studentAnswer != null and studentAnswer != ''">student_answer,</if>
+            <if test="score != null">score,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        VALUES
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="submitId != null">#{submitId},</if>
+            <if test="questionId != null">#{questionId},</if>
+            <if test="studentAnswer != null and studentAnswer != ''">#{studentAnswer},</if>
+            <if test="score != null">#{score},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <!-- 老师批改某一道题：给分 + 评语 -->
+    <update id="updateScore" parameterType="com.example.homework.entity.HomeworkSubmitDetail">
+        UPDATE homework_submit_detail
+        SET score=#{score}, remark=#{remark}
+        WHERE id=#{id}
+    </update>
+</mapper>

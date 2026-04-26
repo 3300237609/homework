@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 作业-题目关联表 Mapper：把题库题目绑定到作业 -->
+<mapper namespace="com.example.homework.mapper.HomeworkQuestionMapper">
+
+    <!-- 结果映射：查询作业题目时，自动把题目详情一起查出来 -->
+    <resultMap id="HomeworkQuestionMap" type="com.example.homework.entity.HomeworkQuestion">
+        <!-- 一对一关联查询：根据 question_id 去查题目详情 -->
+        <association
+                property="question"
+                column="question_id"
+                select="com.example.homework.mapper.QuestionMapper.selectById"
+        />
+    </resultMap>
+
+    <!-- 根据作业ID 查询该作业下所有题目（包含题目详情） -->
+    <select id="selectByHomeworkId" parameterType="long" resultMap="HomeworkQuestionMap">
+        SELECT * FROM homework_question
+        WHERE homework_id=#{homeworkId}
+        ORDER BY sort
+    </select>
+
+    <!-- 给作业添加一道题目 -->
+    <insert id="insert" parameterType="com.example.homework.entity.HomeworkQuestion">
+        INSERT INTO homework_question(homework_id,question_id,score,sort)
+        VALUES(#{homeworkId},#{questionId},#{score},#{sort})
+    </insert>
+
+    <!-- 清空某个作业下的所有题目（修改作业时用） -->
+    <delete id="deleteByHomeworkId" parameterType="long">
+        DELETE FROM homework_question WHERE homework_id=#{homeworkId}
+    </delete>
+    <select id="selectByQuestionId" parameterType="java.lang.Long" resultType="com.example.homework.entity.HomeworkQuestion">
+        SELECT * FROM homework_question WHERE question_id = #{questionId}
+    </select>
+</mapper>

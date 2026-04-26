@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 题库表 Mapper：负责题目增删改查 -->
+<mapper namespace="com.example.homework.mapper.QuestionMapper">
+
+    <!-- 查询所有题目（按创建时间倒序）-->
+    <select id="selectList" resultType="com.example.homework.entity.Question">
+        SELECT
+            id,
+            course_id,
+            title,
+            type,
+            options,
+            answer,
+            score,
+            difficulty
+        FROM question
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据ID查询单条题目 -->
+    <select id="selectById" parameterType="long" resultType="com.example.homework.entity.Question">
+        SELECT
+            id,
+            course_id,
+            title,
+            type,
+            options,
+            answer,
+            score,
+            difficulty
+        FROM question
+        WHERE id = #{id}
+    </select>
+
+    <!-- 新增题目到题库 -->
+    <insert id="insert" parameterType="com.example.homework.entity.Question">
+        INSERT INTO question(course_id,title,type,options,
+        <if test="answer != null">answer,</if>
+        score
+        <if test="difficulty != null">,difficulty</if>
+        )
+        VALUES(#{courseId},#{title},#{type},#{options},
+        <if test="answer != null">#{answer},</if>
+        #{score}
+        <if test="difficulty != null">,#{difficulty}</if>
+        )
+    </insert>
+
+    <!-- 修改题目信息 -->
+    <update id="update" parameterType="com.example.homework.entity.Question">
+        UPDATE question
+        SET title=#{title},
+            type=#{type},
+            options=#{options},
+            answer=#{answer},
+            score=#{score},
+            difficulty=#{difficulty}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除题目 -->
+    <delete id="delete" parameterType="long">
+        DELETE
+        FROM question
+        WHERE id = #{id}
+    </delete>
+
+    <select id="selectListByCondition" resultType="com.example.homework.entity.Question">
+        SELECT * FROM question
+        <where>
+            <if test="courseId != null">AND course_id = #{courseId}</if>
+            <if test="type != null and type != ''">AND type = #{type}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%') OR options LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectListByCourseId" resultType="com.example.homework.entity.Question">
+        SELECT
+            id,
+            course_id,
+            title,
+            type,
+            options,
+            answer,
+            score,
+            difficulty
+        FROM question
+        WHERE course_id = #{courseId}
+        ORDER BY create_time DESC
+    </select>
+</mapper>
