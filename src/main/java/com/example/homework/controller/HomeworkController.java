@@ -2,8 +2,12 @@ package com.example.homework.controller;
 
 import com.example.homework.common.R;
 import com.example.homework.dto.HomeworkSubmitDTO;
+import com.example.homework.dto.QuestionSubmitDTO;
 import com.example.homework.entity.Homework;
 import com.example.homework.service.HomeworkService;
+import com.example.homework.service.HomeworkSubmitService;
+import com.example.homework.vo.HomeworkDetailVO;
+import com.example.homework.vo.HomeworkVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +24,8 @@ public class HomeworkController {
 
     @Autowired
     private HomeworkService homeworkService;
+    @Autowired
+    private HomeworkSubmitService homeworkSubmitService;
 
     /**
      * 发布新作业（教师）
@@ -43,10 +49,10 @@ public class HomeworkController {
     @GetMapping("/list")
     public R<List<Homework>> getHomeworkList(
             @RequestParam(required = false) Long clazzId,
+            @RequestParam(required = false) Long courseId,  // 新增
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize
-    ) {
-        return homeworkService.getHomeworkList(clazzId, pageNum, pageSize);
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+        return homeworkService.getHomeworkList(clazzId, courseId, pageNum, pageSize);
     }
 
     /**
@@ -93,12 +99,11 @@ public class HomeworkController {
      * 返回值：学生作业列表
      */
     @GetMapping("/student/list")
-    public R<List<Homework>> getStudentHomeworkList(
+    public R<List<HomeworkVO>> getStudentHomeworkList(
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize
-    ) {
+            @RequestParam(defaultValue = "10") Integer pageSize) {
         return homeworkService.getStudentHomeworkList(courseId, status, pageNum, pageSize);
     }
 
@@ -111,12 +116,18 @@ public class HomeworkController {
      * 返回值：学生视角的作业详情
      */
     @GetMapping("/student/detail/{id}")
-    public R<Homework> getStudentHomeworkDetail(@PathVariable Long id) {
+    public R<HomeworkDetailVO> getStudentHomeworkDetail(@PathVariable Long id) {
         return homeworkService.getStudentHomeworkDetail(id);
     }
 
+    @PostMapping("/submit/question")
+    public R<String> submitQuestion(@RequestBody QuestionSubmitDTO dto
+    ) {
+        return  homeworkSubmitService.submitQuestion(dto);
+    }
+
     @PostMapping("/submitWork")
-    public R<String> submitWork(@RequestBody HomeworkSubmitDTO homeworkSubmitDTO) {
-        return homeworkService.submitWork(homeworkSubmitDTO.getHomeworkId(), homeworkSubmitDTO.getContent(), homeworkSubmitDTO.getAnswerList());
+    public R<String> submitWork(@RequestBody HomeworkSubmitDTO homeworkId) {
+        return homeworkSubmitService.submitWork(homeworkId.getHomeworkId());
     }
 }

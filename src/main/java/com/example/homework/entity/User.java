@@ -1,5 +1,6 @@
 package com.example.homework.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -39,6 +40,7 @@ public class User {
     /**
      * 班级ID（学生才有）
      */
+    @JsonProperty("clazzId") // 强制指定JSON字段名
     private Long clazzId;
 
     /**

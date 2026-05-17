@@ -9,10 +9,15 @@ import java.util.List;
 @Mapper
 public interface HomeworkSubmitMapper {
     List<HomeworkSubmit> selectByHomeworkId(Long homeworkId);
-    HomeworkSubmit selectById(Long id);
+
+
     int insert(HomeworkSubmit submit);
-    int updateScore(HomeworkSubmit submit);
-    HomeworkSubmit selectByHomeworkIdAndStudentId(@Param("homeworkId") Long homeworkId,
-                                                  @Param("studentId") Long studentId);
+
+    HomeworkSubmit selectByHomeworkAndStudent(
+            @Param("homeworkId") Long homeworkId,
+            @Param("studentId") Long studentId
+    );
+
+    void updateById(HomeworkSubmit homeworkSubmit);
 
 }

@@ -16,6 +16,7 @@ public interface QuestionMapper {
     int delete(Long id);
     List<Question> selectListByCondition(@Param("courseId") Long courseId,
                                          @Param("type") String type,
-                                         @Param("keyword") String keyword);
+                                         @Param("keyword") String keyword,
+                                         @Param("difficulty") String difficulty);
     List<Question> selectListByCourseId(Long courseId);
 }

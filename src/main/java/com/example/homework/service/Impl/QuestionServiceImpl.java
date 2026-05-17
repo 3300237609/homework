@@ -106,7 +106,7 @@ public class QuestionServiceImpl implements QuestionService {
      * 支持：课程ID、题型、关键词搜索
      */
     @Override
-    public R<List<Question>> getQuestionList(Long courseId, String type, String keyword, Integer pageNum, Integer pageSize) {
+    public R<List<Question>> getQuestionList(Long courseId, String type, String keyword,String difficulty, Integer pageNum, Integer pageSize) {
         // 权限校验
         if (!PermissionUtil.isAdminOrTeacher()) {
             return R.error("权限不足！仅教师可查看题库");
@@ -114,7 +114,7 @@ public class QuestionServiceImpl implements QuestionService {
 
         // 分页
         PageHelper.startPage(pageNum, pageSize);
-        List<Question> questionList = questionMapper.selectListByCondition(courseId, type, keyword);
+        List<Question> questionList = questionMapper.selectListByCondition(courseId, type, keyword,difficulty);
 
         PageInfo<Question> pageInfo = new PageInfo<>(questionList);
         return R.success(questionList)

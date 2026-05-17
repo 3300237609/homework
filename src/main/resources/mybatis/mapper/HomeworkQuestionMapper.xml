@@ -17,22 +17,34 @@
 
     <!-- 根据作业ID 查询该作业下所有题目（包含题目详情） -->
     <select id="selectByHomeworkId" parameterType="long" resultMap="HomeworkQuestionMap">
-        SELECT * FROM homework_question
-        WHERE homework_id=#{homeworkId}
+        SELECT *
+        FROM homework_question
+        WHERE homework_id = #{homeworkId}
         ORDER BY sort
     </select>
 
     <!-- 给作业添加一道题目 -->
     <insert id="insert" parameterType="com.example.homework.entity.HomeworkQuestion">
-        INSERT INTO homework_question(homework_id,question_id,score,sort)
-        VALUES(#{homeworkId},#{questionId},#{score},#{sort})
+        INSERT INTO homework_question(homework_id, question_id, score, sort)
+        VALUES (#{homeworkId}, #{questionId}, #{score}, #{sort})
     </insert>
 
     <!-- 清空某个作业下的所有题目（修改作业时用） -->
     <delete id="deleteByHomeworkId" parameterType="long">
-        DELETE FROM homework_question WHERE homework_id=#{homeworkId}
+        DELETE
+        FROM homework_question
+        WHERE homework_id = #{homeworkId}
     </delete>
-    <select id="selectByQuestionId" parameterType="java.lang.Long" resultType="com.example.homework.entity.HomeworkQuestion">
-        SELECT * FROM homework_question WHERE question_id = #{questionId}
+    <select id="selectByQuestionId" parameterType="java.lang.Long"
+            resultType="com.example.homework.entity.HomeworkQuestion">
+        SELECT *
+        FROM homework_question
+        WHERE question_id = #{questionId}
+    </select>
+    <select id="selectByHomeworkAndQuestion" resultType="com.example.homework.entity.HomeworkQuestion">
+        SELECT *
+        FROM homework_question
+        WHERE homework_id = #{homeworkId}
+          AND question_id = #{questionId}
     </select>
 </mapper>

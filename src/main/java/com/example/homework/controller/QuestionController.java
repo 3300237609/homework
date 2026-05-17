@@ -48,9 +48,10 @@ public class QuestionController {
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String difficulty,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize) {
-        return questionService.getQuestionList(courseId, type, keyword, pageNum, pageSize);
+        return questionService.getQuestionList(courseId, type, keyword, difficulty, pageNum, pageSize);
     }
 
     /**

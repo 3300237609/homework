@@ -1,36 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.homework.mapper.CourseMapper">
 
-    <select id="list" resultType="com.example.homework.entity.Course">
-        SELECT * FROM course
-        <where>
-            <if test="teacherId != null">AND teacher_id = #{teacherId}</if>
-            <if test="clazzId != null">AND clazz_id = #{clazzId}</if>
-        </where>
-    </select>
-
     <insert id="add" parameterType="com.example.homework.entity.Course">
-        INSERT INTO course (course_name, teacher_id, clazz_id, create_time, update_time)
-        VALUES (#{courseName}, #{teacherId}, #{clazzId}, #{createTime}, #{updateTime})
+        INSERT INTO course_teacher (course_id, teacher_id, clazz_id)
+        SELECT id, #{teacherId}, #{clazzId} FROM course WHERE course_name = #{courseName}
     </insert>
 
     <update id="update" parameterType="com.example.homework.entity.Course">
-        UPDATE course
+        UPDATE course_teacher
         <set>
-            <if test="courseName != null">course_name = #{courseName},</if>
-            <if test="teacherId != null">teacher_id = #{teacherId},</if>
-            <if test="clazzId != null">clazz_id = #{clazzId},</if>
-            update_time = #{updateTime}
+            <if test="courseName != null">
+                course_id = (SELECT id FROM course WHERE course_name = #{courseName}),
+            </if>
+            <if test="teacherId != null">
+                teacher_id = #{teacherId},
+            </if>
+            <if test="clazzId != null">
+                clazz_id = #{clazzId}
+            </if>
         </set>
-        WHERE id = #{id}
+        WHERE course_id = #{id}
     </update>
 
-    <select id="hasHomework" resultType="boolean">
+    <select id="hasHomework" resultType="boolean" parameterType="java.lang.Long">
         SELECT COUNT(*) > 0 FROM homework WHERE course_id = #{id}
     </select>
 
-    <delete id="delete">
+    <delete id="delete" parameterType="java.lang.Long">
+        DELETE FROM course_teacher WHERE course_id = #{id}
+    </delete>
+    <delete id="deleteCourse">
         DELETE FROM course WHERE id = #{id}
     </delete>
+
+    <!-- 课程分页列表 -->
+    <select id="list" resultType="com.example.homework.vo.CourseVo">
+        SELECT
+        c.id,
+        c.course_name,
+        c.create_time,
+        ct.teacher_id,
+        ct.clazz_id,
+        u.name AS teacherName
+        FROM course c
+        INNER JOIN course_teacher ct ON c.id = ct.course_id
+        LEFT JOIN user u ON ct.teacher_id = u.id
+        <where>
+            <if test="teacherId != null">AND ct.teacher_id = #{teacherId}</if>
+            <if test="clazzId != null">AND ct.clazz_id = #{clazzId}</if>
+        </where>
+        GROUP BY c.id, c.course_name, c.create_time, ct.teacher_id, ct.clazz_id, u.name
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 课程总数 -->
+    <select id="countCourse" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT c.id)
+        FROM course c
+        INNER JOIN course_teacher ct ON c.id = ct.course_id
+        <where>
+            <if test="teacherId != null">AND ct.teacher_id = #{teacherId}</if>
+            <if test="clazzId != null">AND ct.clazz_id = #{clazzId}</if>
+        </where>
+    </select>
+
+    <insert id="addCourseTeacher">
+        INSERT INTO course_teacher (course_id, teacher_id)
+        VALUES (#{courseId}, #{teacherId})
+    </insert>
+
+    <delete id="deleteTeacherByCourseId">
+        DELETE FROM course_teacher WHERE course_id = #{courseId}
+    </delete>
+
+    <select id="listTeacherIdsByCourseId" resultType="long">
+        SELECT teacher_id FROM course_teacher WHERE course_id = #{courseId}
+    </select>
+
+    <!-- 获取所有课程名称和ID -->
+    <select id="listAllCourseName" resultType="com.example.homework.vo.CourseVo">
+        SELECT
+            id,
+            course_name
+        FROM course
+        ORDER BY id DESC
+    </select>
+    <insert id="addCourse" parameterType="com.example.homework.entity.Course">
+        INSERT INTO course (course_name, create_time, update_time)
+        VALUES (#{courseName}, #{createTime}, #{updateTime})
+    </insert>
 </mapper>

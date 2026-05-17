@@ -10,7 +10,7 @@ public interface QuestionService {
 
     R<String> batchAddQuestion(List<Question> questionList);
 
-    R<List<Question>> getQuestionList(Long courseId, String type, String keyword, Integer pageNum, Integer pageSize);
+    R<List<Question>> getQuestionList(Long courseId, String type, String keyword, String difficulty, Integer pageNum, Integer pageSize);
 
     R<Question> getQuestionDetail(Long questionId);
 

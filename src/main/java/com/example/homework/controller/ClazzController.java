@@ -3,6 +3,7 @@ package com.example.homework.controller;
 import com.example.homework.common.R;
 import com.example.homework.entity.Clazz;
 import com.example.homework.service.ClazzService;
+import com.example.homework.vo.ClazzVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class ClazzController {
 
     //GET /list 获取班级列表 分页+筛选
     @GetMapping("/list")
-    public R<List<Clazz>> getClazzList(
+    public R<List<ClazzVo>> getClazzList(
             @RequestParam(required = false, defaultValue = "") Long teacherId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize

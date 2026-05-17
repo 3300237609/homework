@@ -6,6 +6,9 @@ import com.example.homework.entity.*;
 import com.example.homework.mapper.*;
 import com.example.homework.service.HomeworkService;
 import com.example.homework.utils.PermissionUtil;
+import com.example.homework.vo.HomeworkDetailVO;
+import com.example.homework.vo.HomeworkQuestionVO;
+import com.example.homework.vo.HomeworkVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +20,6 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 作业业务层实现类
@@ -40,6 +42,9 @@ public class HomeworkServiceImpl implements HomeworkService {
 
     @Autowired
     private HomeworkSubmitDetailMapper homeworkSubmitDetailMapper;
+
+    @Autowired
+    private UserMapper userMapper;
 
     /**
      * 发布新作业
@@ -64,7 +69,7 @@ public class HomeworkServiceImpl implements HomeworkService {
 
         // 3. 补充基础信息
         homework.setTeacherId(Long.valueOf(UserContextHolder.getUserId()));
-        if (homework.getStartTime()==null){
+        if (homework.getStartTime() == null) {
             homework.setStartTime(LocalDateTime.now());
         }
 
@@ -113,19 +118,41 @@ public class HomeworkServiceImpl implements HomeworkService {
      * 仅教师/管理员可操作，按教师ID筛选，支持班级筛选
      */
     @Override
-    public R<List<Homework>> getHomeworkList(Long clazzId, Integer pageNum, Integer pageSize) {
-        // 1. 权限校验
+    public R<List<Homework>> getHomeworkList(Long clazzId, Long courseId, Integer pageNum, Integer pageSize) {
         if (!PermissionUtil.isAdminOrTeacher()) {
             return R.error("权限不足！仅教师可查看作业列表");
         }
-
-        // 2. 分页查询（使用PageHelper简化分页）
         PageHelper.startPage(pageNum, pageSize);
-        List<Homework> homeworkList = homeworkMapper.selectListByCondition(Long.valueOf(UserContextHolder.getUserId()), clazzId);
-        
-        // 3. 封装分页信息
+        List<Homework> homeworkList = homeworkMapper.selectListByCondition(
+                Long.valueOf(UserContextHolder.getUserId()),
+                clazzId,
+                courseId
+        );
+
+        for (Homework homework : homeworkList) {
+            Long homeworkId = homework.getId();
+            Long cid = homework.getClazzId();
+
+            // 1. 班级总人数
+            Integer totalStudent = homeworkMapper.getClazzStudentCount(cid);
+            // 2. 已提交人数
+            Integer submitCount = homeworkMapper.getHomeworkSubmitCount(homeworkId);
+            // 3. 未提交人数
+            Integer unSubmitCount = totalStudent - submitCount;
+            // 4. 已批改人数
+            Integer correctedCount = homeworkMapper.getHomeworkCorrectedCount(homeworkId);
+            // 5. 未批改人数
+            Integer unCorrectCount = submitCount - correctedCount;
+
+            homework.setTotalStudent(totalStudent);
+            homework.setSubmitCount(submitCount);
+            homework.setUnSubmitCount(unSubmitCount);
+            homework.setCorrectedCount(correctedCount);
+            homework.setUnCorrectCount(unCorrectCount);
+        }
         PageInfo<Homework> pageInfo = new PageInfo<>(homeworkList);
-        return R.success(homeworkList).add("total", pageInfo.getTotal())
+        return R.success(homeworkList)
+                .add("total", pageInfo.getTotal())
                 .add("pageNum", pageInfo.getPageNum())
                 .add("pageSize", pageInfo.getPageSize())
                 .add("pages", pageInfo.getPages());
@@ -237,22 +264,24 @@ public class HomeworkServiceImpl implements HomeworkService {
      * 仅学生可操作，按学生ID+课程ID筛选，支持提交状态过滤
      */
     @Override
-    public R<List<Homework>> getStudentHomeworkList(Long courseId, String status, Integer pageNum, Integer pageSize) {
-        // 1. 权限校验
+    public R<List<HomeworkVO>> getStudentHomeworkList(Long courseId, String status, Integer pageNum, Integer pageSize) {
         if (!PermissionUtil.isStudent()) {
-            return R.error("权限不足！仅学生可查看个人作业列表");
+            return R.error("权限不足！");
         }
 
-        // 2. 分页查询
+        // 当前学生ID
+        Long studentId = Long.valueOf(UserContextHolder.getUserId());
+        // 自动获取自己班级
+        Long clazzId = userMapper.getClazzIdByUserId(studentId);
+
         PageHelper.startPage(pageNum, pageSize);
-        List<Homework> homeworkList = homeworkMapper.selectStudentHomeworkList(Long.valueOf(UserContextHolder.getUserId()), courseId, status);
-        
-        // 3. 封装分页信息
-        PageInfo<Homework> pageInfo = new PageInfo<>(homeworkList);
-        return R.success(homeworkList).add("total", pageInfo.getTotal())
+        List<HomeworkVO> list = homeworkMapper.selectStudentHomeworkList(courseId, status, studentId);
+
+        PageInfo<HomeworkVO> pageInfo = new PageInfo<>(list);
+        return R.success(list)
+                .add("total", pageInfo.getTotal())
                 .add("pageNum", pageInfo.getPageNum())
-                .add("pageSize", pageInfo.getPageSize())
-                .add("pages", pageInfo.getPages());
+                .add("pageSize", pageInfo.getPageSize());
     }
 
     /**
@@ -260,148 +289,29 @@ public class HomeworkServiceImpl implements HomeworkService {
      * 仅学生可操作，返回自身提交状态
      */
     @Override
-    public R<Homework> getStudentHomeworkDetail(Long homeworkId) {
-        // 1. 参数校验
-        if (homeworkId == null) {
-            return R.error("作业ID不能为空！");
-        }
-
-        // 2. 权限校验
-        if (!PermissionUtil.isStudent()) {
-            return R.error("权限不足！仅本人可查看作业详情");
-        }
-
-        // 3. 查询作业主信息
-        Homework homework = homeworkMapper.selectById(homeworkId);
-        if (homework == null) {
-            return R.error("作业不存在！");
-        }
-
-        // 4. 查询作业题目
-        List<HomeworkQuestion> questionList = homeworkQuestionMapper.selectByHomeworkId(homeworkId);
-
-
-        LocalDateTime now = LocalDateTime.now();       // 当前时间
-        LocalDateTime deadline = homework.getDeadline();// 作业截止时间
-
-        for (HomeworkQuestion homeworkQuestion : questionList) {
-            Question question = homeworkQuestion.getQuestion();
-
-            if (question != null && now.isBefore(deadline)) {
-                question.setAnswer(null);
-            }
-        }
-
-        homework.setQuestionList(questionList);
-
-        // 5. 查询学生提交状态
-        HomeworkSubmit submit = homeworkSubmitMapper.selectByHomeworkIdAndStudentId(homeworkId, Long.valueOf(UserContextHolder.getUserId()));
-        homework.addExtendData("isSubmitted", submit != null); // 是否提交
-        homework.addExtendData("submitTime", submit != null ? submit.getSubmitTime() : null); // 提交时间
-
-        return R.success(homework);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public R<String> submitWork(Long homeworkId, String content, List<HomeworkSubmitDetail> answerList) {
-
-        // ===================== 1. 基础校验 =====================
-        if (homeworkId == null) {
-            return R.error("作业ID不能为空！");
-        }
-        if (CollectionUtils.isEmpty(answerList)) {
-            return R.error("答案不能为空！");
-        }
-
-        // 仅学生可提交
-        if (!PermissionUtil.isStudent()) {
-            return R.error("权限不足！仅学生可提交作业");
-        }
-
-        // 获取当前学生ID（直接从上下文拿，不传参）
+    public R<HomeworkDetailVO> getStudentHomeworkDetail(Long homeworkId) {
         Long studentId = Long.valueOf(UserContextHolder.getUserId());
-
-        // ===================== 2. 重复提交校验 =====================
-        HomeworkSubmit existSubmit = homeworkSubmitMapper.selectByHomeworkIdAndStudentId(homeworkId, studentId);
-        if (existSubmit != null) {
-            return R.error("你已提交过该作业，请勿重复提交！");
+        HomeworkDetailVO homeworkDetail = homeworkMapper.getHomeworkDetail(homeworkId, studentId);
+        if (homeworkDetail == null) {
+            throw new RuntimeException("作业不存在");
         }
 
-        // ===================== 3. 保存提交主表 =====================
-        HomeworkSubmit homeworkSubmit = new HomeworkSubmit();
-        homeworkSubmit.setHomeworkId(homeworkId);
-        homeworkSubmit.setStudentId(studentId);
-        homeworkSubmit.setContent(content);
-        homeworkSubmit.setStatus("已提交（待批改）");
-        homeworkSubmit.setSubmitTime(LocalDateTime.now());
-        homeworkSubmitMapper.insert(homeworkSubmit);
+        // 2. 查询所有题目及作答信息
+        List<HomeworkQuestionVO> questionList = homeworkMapper.listHomeworkQuestionDetail(homeworkId, studentId);
+        homeworkDetail.setQuestionList(questionList);
 
-        Long submitId = homeworkSubmit.getId();
+        // 3. 关键逻辑：未批改时隐藏得分和正确答案
+        String status = homeworkDetail.getHomeworkStatus();
+        boolean isFinished = "已批改".equals(status) || "已完成".equals(status);
 
-        // ===================== 4. 获取作业题目（从数据库拿） =====================
-        List<HomeworkQuestion> homeworkQuestionList = homeworkQuestionMapper.selectByHomeworkId(homeworkId);
-        System.out.println(homeworkQuestionList);
-        if (CollectionUtils.isEmpty(homeworkQuestionList)) {
-            return R.error("该作业暂无题目！");
+        for (HomeworkQuestionVO q : questionList) {
+            if (!isFinished) {
+                // 状态不是已完成，清空得分和正确答案
+                q.setQuestionScoreGot(null);
+                q.setCorrectAnswer(null);
+            }
         }
 
-        // 总分
-        int totalScore = 0;
-
-        // ===================== 5. 遍历答案 + 自动判分 =====================
-        for (HomeworkSubmitDetail detail : answerList) {
-            Long questionId = detail.getQuestionId();
-            if (questionId == null) {
-                continue;
-            }
-
-            detail.setSubmitId(submitId);
-
-            // 查询题目信息
-            Question question = questionMapper.selectById(questionId);
-            if (question == null) {
-                detail.setScore(0); // 必须set
-                homeworkSubmitDetailMapper.insert(detail);
-                continue;
-            }
-
-            // ===================== 【稳定拿分】 =====================
-            Integer questionScore = 0;
-            for (HomeworkQuestion hq : homeworkQuestionList) {
-                if (hq.getQuestion() != null && hq.getQuestion().getId() != null) {
-                    if (hq.getQuestion().getId().equals(questionId)) {
-                        questionScore = hq.getScore() == null ? 0 : hq.getScore();
-                        break;
-                    }
-                }
-            }
-
-            // 答案处理
-            String studentAnswer = detail.getStudentAnswer() == null ? "" : detail.getStudentAnswer().trim();
-            String rightAnswer = question.getAnswer() == null ? "" : question.getAnswer().trim();
-
-            // ===================== 自动判分 =====================
-            if (Arrays.asList("单选", "多选", "判断").contains(question.getType())) {
-                if (studentAnswer.equals(rightAnswer)) {
-                    detail.setScore(questionScore);
-                    System.err.println(detail.getScore());
-                    totalScore += questionScore;
-                } else {
-                    detail.setScore(0);
-                }
-            } else {
-                detail.setScore(0);
-            }
-
-            homeworkSubmitDetailMapper.insert(detail);
-        }
-
-        // ===================== 6. 更新总分 =====================
-        homeworkSubmit.setId(submitId);
-        homeworkSubmit.setTotalScore(totalScore);
-        homeworkSubmitMapper.updateScore(homeworkSubmit);
-
-        return R.success("作业提交成功！客观题已自动判分，得分：" + totalScore + " 分");
+        return R.success(homeworkDetail);
     }
 }

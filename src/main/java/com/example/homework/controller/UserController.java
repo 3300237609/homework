@@ -30,11 +30,11 @@ public class UserController {
     @GetMapping("/list")
     public R<ArrayList<User>> getUserList(
             @RequestParam(required = false, defaultValue = "") String role,
-            @RequestParam(required = false, defaultValue = "") String clazz,
+            @RequestParam(required = false, defaultValue = "") String clazzId,
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize
     ) {
-        return userService.getUserList(role, clazz, pageNum, pageSize);
+        return userService.getUserList(role, clazzId, pageNum, pageSize);
     }
 
     //POST /add 新增用户（批量/单个） --管理员
@@ -53,6 +53,10 @@ public class UserController {
     @DeleteMapping("/delete/{id}")
     public R<String> deleteUser(@PathVariable Long id) {
        return userService.deleteUser(id);
+    }
+    @GetMapping("/getNameById")
+    public R<String> getNameById(@RequestParam Long id) {
+        return userService.getNameById(id);
     }
 
 }

@@ -14,4 +14,5 @@ public class HomeworkSubmitDetail {
     private Integer score;        // 本题得分
     private String remark;        // 批改评语
     private LocalDateTime createTime;
+    private String questionSubmitStatus;
 }

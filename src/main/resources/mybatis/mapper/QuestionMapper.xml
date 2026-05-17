@@ -71,10 +71,27 @@
     <select id="selectListByCondition" resultType="com.example.homework.entity.Question">
         SELECT * FROM question
         <where>
-            <if test="courseId != null">AND course_id = #{courseId}</if>
-            <if test="type != null and type != ''">AND type = #{type}</if>
+            <!-- 课程ID -->
+            <if test="courseId != null">
+                AND course_id = #{courseId}
+            </if>
+
+            <!-- 题型（单选、多选、判断等） -->
+            <if test="type != null and type != ''">
+                AND type = #{type}
+            </if>
+
+            <!-- 难度（简单、中等、困难） -->
+            <if test="difficulty != null and difficulty != ''">
+                AND difficulty = #{difficulty}
+            </if>
+
+            <!-- 关键词：题目、选项模糊搜索 -->
             <if test="keyword != null and keyword != ''">
-                AND (title LIKE CONCAT('%', #{keyword}, '%') OR options LIKE CONCAT('%', #{keyword}, '%'))
+                AND (
+                title LIKE CONCAT('%', #{keyword}, '%')
+                OR options LIKE CONCAT('%', #{keyword}, '%')
+                )
             </if>
         </where>
         ORDER BY create_time DESC

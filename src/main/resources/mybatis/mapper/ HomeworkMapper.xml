@@ -55,48 +55,117 @@
     <!-- 按条件查询教师发布的作业列表 -->
     <select id="selectListByCondition" resultType="com.example.homework.entity.Homework">
         SELECT * FROM homework
-        WHERE teacher_id = #{teacherId}
-        <if test="clazzId != null">
-            AND clazz_id = #{clazzId}
-        </if>
+        <where>
+            teacher_id = #{teacherId}
+            <if test="clazzId != null">
+                AND clazz_id = #{clazzId}
+            </if>
+            <if test="courseId != null">
+                AND course_id = #{courseId}
+            </if>
+        </where>
         ORDER BY create_time DESC
     </select>
 
     <!-- 查询学生视角的作业列表（过滤提交状态） -->
-    <select id="selectStudentHomeworkList" resultType="com.example.homework.entity.Homework">
-        SELECT h.*
+    <select id="selectStudentHomeworkList" resultType="com.example.homework.vo.HomeworkVO">
+        SELECT
+        h.id,
+        h.title,
+        h.content,
+        h.start_time AS startTime,
+        h.deadline AS deadline,
+        IFNULL(
+        (SELECT total_score FROM homework_submit
+        WHERE homework_id = h.id AND student_id = #{studentId}),
+        0
+        ) AS totalScore,
+        c.course_name AS courseName,
+        cl.clazz_name AS clazzName,
+        IFNULL(
+        (SELECT status FROM homework_submit
+        WHERE homework_id = h.id AND student_id = #{studentId}),
+        '未提交'
+        ) AS status,
+        (SELECT submit_time FROM homework_submit
+        WHERE homework_id = h.id AND student_id = #{studentId}) AS submitTime
         FROM homework h
-        <where>
-            <!-- 课程 ID 可选 -->
-            <if test="courseId != null">
-                AND h.course_id = #{courseId}
-            </if>
-
-            <!-- 未提交 -->
-            <if test="status != null and status == '0'">
-                AND h.id NOT IN (
-                SELECT homework_id
-                FROM homework_submit
-                WHERE student_id = #{studentId}
-                )
-            </if>
-
-            <!-- 已提交 -->
-            <if test="status != null and status == '1'">
-                AND h.id IN (
-                SELECT homework_id
-                FROM homework_submit
-                WHERE student_id = #{studentId}
-                )
-            </if>
-        </where>
-
+        LEFT JOIN course c ON h.course_id = c.id
+        LEFT JOIN clazz cl ON h.clazz_id = cl.id
+        WHERE h.clazz_id = (SELECT clazz_id FROM user WHERE id = #{studentId})
+        <if test="courseId != null">
+            AND h.course_id = #{courseId}
+        </if>
+        <if test="status != null and status != ''">
+            AND (
+            #{status} = '未提交' AND (
+            SELECT id FROM homework_submit
+            WHERE homework_id = h.id AND student_id = #{studentId}
+            ) IS NULL
+            OR
+            #{status} != '未提交' AND (
+            SELECT status FROM homework_submit
+            WHERE homework_id = h.id AND student_id = #{studentId}
+            ) = #{status}
+            )
+        </if>
         ORDER BY h.create_time DESC
     </select>
+
 
     <update id="updateTotalScore" parameterType="com.example.homework.entity.Homework">
         UPDATE homework
         SET total_score = #{totalScore}
         WHERE id = #{id}
     </update>
+    <select id="getHomeworkDetail" resultType="com.example.homework.vo.HomeworkDetailVO">
+        SELECT
+            h.id AS homeworkId,
+            h.title,
+            h.content AS requirement,
+            h.total_score AS fullScore,
+            c.course_name AS subject,
+            hs.status AS homeworkStatus
+        FROM homework h
+                 LEFT JOIN course c ON h.course_id = c.id
+                 LEFT JOIN homework_submit hs ON h.id = hs.homework_id AND hs.student_id = #{studentId}
+        WHERE h.id = #{homeworkId}
+    </select>
+    <select id="listHomeworkQuestionDetail"  resultType="com.example.homework.vo.HomeworkQuestionVO">
+        SELECT
+            q.id AS questionId,
+            hq.homework_id AS homeworkId,
+            hq.score AS questionScore,
+            q.title,
+            q.type AS questionType,
+            q.options,
+            q.answer AS correctAnswer,
+            hsd.student_answer AS studentAnswer,
+            hsd.score AS questionScoreGot,
+            hsd.question_submit_status
+        FROM homework_question hq
+                 JOIN question q ON hq.question_id = q.id
+                 LEFT JOIN homework_submit_detail hsd
+                           ON hq.question_id = hsd.question_id
+                               AND hsd.submit_id = (SELECT id FROM homework_submit WHERE homework_id = #{homeworkId} AND student_id = #{studentId})
+        WHERE hq.homework_id = #{homeworkId}
+        ORDER BY hq.sort ASC
+    </select>
+
+    <!-- 统计班级学生数量 -->
+    <select id="getClazzStudentCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM user WHERE clazz_id = #{clazzId} AND role_id = 3
+    </select>
+
+    <!-- 统计作业提交人数 -->
+    <select id="getHomeworkSubmitCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM homework_submit
+        WHERE homework_id = #{homeworkId}
+          AND status != '未提交'
+    </select>
+
+    <!-- 统计作业已批改人数 -->
+    <select id="getHomeworkCorrectedCount" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM homework_submit WHERE homework_id = #{homeworkId} AND status = '已批改'
+    </select>
 </mapper>

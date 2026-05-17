@@ -5,6 +5,7 @@ import com.example.homework.entity.Clazz;
 import com.example.homework.mapper.ClazzMapper;
 import com.example.homework.mapper.UserMapper;
 import com.example.homework.service.ClazzService;
+import com.example.homework.vo.ClazzVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +17,27 @@ public class ClazzServiceImpl implements ClazzService {
     @Autowired
     UserMapper userMapper;
     @Override
-    public R<List<Clazz>> getClazzList(Long teacherId, Integer pageSize, Integer pageNum) {
+    public R<List<ClazzVo>> getClazzList(Long teacherId, Integer pageSize, Integer pageNum) {
+
+        // 分页参数默认值
+        if (pageNum == null) pageNum = 1;
+        if (pageSize == null) pageSize = 10;
 
         // 提前计算偏移量：(页码-1)*每页条数
         Integer offset = (pageNum - 1) * pageSize;
-        return R.success(clazzMapper.getClazzList(teacherId, pageSize, offset));
-    }
 
+        // 查询列表
+        List<ClazzVo> clazzList = clazzMapper.getClazzList(teacherId, pageSize, offset);
+
+        // 查询总数
+        Integer total = clazzMapper.getClazzCount(teacherId);
+
+        // 按统一格式返回：list + 分页信息
+        return R.success(clazzList)
+                .add("total", total)
+                .add("pageNum", pageNum)
+                .add("pageSize", pageSize);
+    }
     @Override
     public R<Clazz> getClazzById(Long id) {
         return  R.success(clazzMapper.getClazzById(id));

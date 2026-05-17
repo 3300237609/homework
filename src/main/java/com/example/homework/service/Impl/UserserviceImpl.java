@@ -24,6 +24,7 @@ public class UserserviceImpl implements UserService {
     UserMapper userMapper;
     @Autowired
     JwtUtil jwtUtil;
+
     @Override
     public R<User> login(String username, String password, HttpServletResponse response) {
         //判断用户名和密码是否为空
@@ -57,14 +58,12 @@ public class UserserviceImpl implements UserService {
         if (StrUtil.isBlank(user.getUsername())
                 || StrUtil.isBlank(user.getPassword())
                 || StrUtil.isBlank(user.getName())
-                || user.getRoleId() == null
-                || user.getClazzId() == null
         ) {
             return R.error("数据异常！");
         }
         //查询数据库昵称是否重复
         boolean userByName = userMapper.getUserByUsername(user.getUsername());
-        if (userByName){
+        if (userByName) {
             //昵称重复
             return R.error("昵称重复！");
         }
@@ -72,26 +71,42 @@ public class UserserviceImpl implements UserService {
         user.setPassword(SecureUtil.md5(user.getPassword()));
         boolean register = userMapper.register(user);
         //注册失败
-        if (!register){
+        if (!register) {
             return R.error("注册失败！");
         }
         return R.success("OK!");
     }
 
     @Override
-    public R<ArrayList<User>> getUserList(String role, String clazz, Integer pageNum, Integer pageSize) {
+    public R<ArrayList<User>> getUserList(String role, String clazzId, Integer pageNum, Integer pageSize) {
 
-        if (!PermissionUtil.isAdmin()){
+        if (!PermissionUtil.isAdmin()) {
             return R.error("权限不足！");
         }
-        // 提前计算偏移量：(页码-1)*每页条数
+
+        // 分页参数默认值
+        if (pageNum == null) pageNum = 1;
+        if (pageSize == null) pageSize = 10;
+
+        // 计算偏移量
         Integer offset = (pageNum - 1) * pageSize;
-        return R.success(userMapper.getUserList(role, clazz, offset, pageSize));
+
+        // 查询列表
+        ArrayList<User> userList = userMapper.getUserList(role, clazzId, offset, pageSize);
+
+        // 查询总数
+        Integer total = userMapper.getUserCount(role, clazzId);
+
+        // 按你的格式返回：data放list，分页信息放进map里
+        return R.success(userList)
+                .add("total", total)
+                .add("pageNum", pageNum)
+                .add("pageSize", pageSize);
     }
 
     @Override
     public R<String> addUser(ArrayList<User> users) {
-        if (!PermissionUtil.isAdmin()){
+        if (!PermissionUtil.isAdmin()) {
             return R.error("权限不足！");
         }
 
@@ -99,7 +114,7 @@ public class UserserviceImpl implements UserService {
         Iterator<User> iterator = users.iterator();
         while (iterator.hasNext()) {
             User user = iterator.next();
-            if (user.getUsername().isEmpty()){
+            if (user.getUsername().isEmpty()) {
                 iterator.remove();
                 usersOut.add(user);
                 continue;
@@ -112,33 +127,44 @@ public class UserserviceImpl implements UserService {
                 user.setPassword("123456");
             }
         }
-        if (!users.isEmpty()){
-            for (User user : users){
+        if (!users.isEmpty()) {
+            for (User user : users) {
                 user.setPassword(SecureUtil.md5(user.getPassword()));
             }
             userMapper.addUser(users);
         }
         boolean success = usersOut.isEmpty();
-        return success ? R.success("新增用户成功") : R.error("有"+users.size()+"条成功！有"+usersOut.size()+"条昵称重复添加失败："+usersOut);
+        return success ? R.success("新增用户成功") : R.error("有" + users.size() + "条成功！有" + usersOut.size() + "条昵称重复添加失败：" + usersOut);
     }
 
     @Override
     public R<String> updateUser(User users) {
-        if (!PermissionUtil.isAdmin()){
-            return R.error("权限不足！");
+        if (!Long.valueOf(UserContextHolder.getUserId()).equals(users.getId())) {
+            if (!PermissionUtil.isAdmin()) {
+                return R.error("权限不足！");
+            }
         }
-        users.setId(Long.valueOf(UserContextHolder.getUserId()));
-        return userMapper.updateUser(users)? R.success("更新成功！") : R.error("更新失败！");
+        return userMapper.updateUser(users) ? R.success("更新成功！") : R.error("更新失败！");
     }
 
     @Override
     public R<String> deleteUser(Long id) {
-        if (!PermissionUtil.isAdmin()){
+        if (!PermissionUtil.isAdmin()) {
             return R.error("权限不足！");
         }
-        if (id == null){
+        if (id == null) {
             return R.error("数据为空！");
         }
         return userMapper.deleteUser(id) ? R.success("删除成功！") : R.error("删除失败！");
+    }
+
+    @Override
+    public R<String> getNameById(Long id) {
+        String userName = userMapper.getNameById(id);
+        // 如果没查到，返回“未知用户”
+        if (userName == null) {
+            return R.error("用户不存在！");
+        }
+        return R.success(userName);
     }
 }

@@ -22,6 +22,12 @@ public class Homework {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
+    private Integer totalStudent;    // 该班级总人数
+    private Integer submitCount;    // 已提交人数
+    private Integer unSubmitCount;  // 未提交人数
+    private Integer correctedCount; // 已批改人数
+    private Integer unCorrectCount;  // 未批改人数
+
     // 非数据库字段：作业包含的题目
     private transient List<HomeworkQuestion> questionList;
 
