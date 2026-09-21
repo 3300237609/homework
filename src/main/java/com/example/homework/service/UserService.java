@@ -2,10 +2,9 @@ package com.example.homework.service;
 
 import com.example.homework.common.R;
 import com.example.homework.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.List;
 
 public interface UserService {
     R<User> login(String username, String password, HttpServletResponse response);

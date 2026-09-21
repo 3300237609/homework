@@ -1,6 +1,7 @@
 package com.example.homework.mapper;
 
 import com.example.homework.entity.Homework;
+import com.example.homework.vo.HomeworkAnswerVO;
 import com.example.homework.vo.HomeworkDetailVO;
 import com.example.homework.vo.HomeworkQuestionVO;
 import com.example.homework.vo.HomeworkVO;
@@ -49,4 +50,13 @@ public interface HomeworkMapper {
 
     List<HomeworkQuestionVO> listHomeworkQuestionDetail(@Param("homeworkId") Long homeworkId,
                                                         @Param("studentId") Long studentId);
+    /**
+     * 根据作业id查询作业实体
+     */
+    Homework selectHomeworkById(@Param("homeworkId") Long homeworkId);
+
+    /**
+     * 查询班级所有学生 + 作业提交记录
+     */
+    List<HomeworkAnswerVO.StudentAnswerVO> selectStudentAnswerByHomeworkId(@Param("homeworkId") Long homeworkId);
 }

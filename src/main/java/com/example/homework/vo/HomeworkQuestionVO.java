@@ -14,4 +14,5 @@ public class HomeworkQuestionVO {
     private String studentAnswer;
     private String correctAnswer;
     private String questionSubmitStatus;
+    private String teacherComment; // 教师评语
 }

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.homework.mapper.HomeworkStatMapper">
+
+    <!-- 老师自己发布的作业总数 -->
+    <select id="getTotalHomework" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM homework
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 该老师班级的学生总数 -->
+    <select id="getTotalStudent" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT u.id)
+        FROM user u
+                 JOIN homework h ON u.clazz_id = h.clazz_id
+        WHERE h.teacher_id = #{teacherId} AND u.role_id = 3
+    </select>
+
+    <!-- 近5次作业：提交人次 / 应提交人次 -->
+    <select id="getSubmitTotal" resultType="java.util.Map">
+        SELECT
+            COUNT(hs.id) AS submitTotal,
+            IFNULL((
+                       SELECT COUNT(DISTINCT u.id)
+                       FROM user u
+                                JOIN homework h ON u.clazz_id = h.clazz_id
+                       WHERE h.teacher_id = #{teacherId}
+                   ),1) * 5 AS shouldTotal
+        FROM homework_submit hs
+                 JOIN homework h ON hs.homework_id = h.id
+        WHERE h.teacher_id = #{teacherId}
+        ORDER BY h.create_time DESC
+        LIMIT 5
+    </select>
+
+    <!-- 近5次作业平均分 -->
+    <select id="getAvgScore" resultType="java.lang.Double">
+        SELECT AVG(hs.total_score)
+        FROM homework_submit hs
+                 JOIN homework h ON hs.homework_id = h.id
+        WHERE h.teacher_id = #{teacherId}
+        ORDER BY h.create_time DESC
+        LIMIT 5
+    </select>
+
+    <!-- 柱状图：近5次作业提交人数 -->
+    <select id="getBarData" resultType="com.example.homework.vo.HomeworkBarVO">
+        SELECT
+            h.title AS homeworkName,
+            COUNT(hs.id) AS submitNum
+        FROM homework h
+                 LEFT JOIN homework_submit hs ON h.id = hs.homework_id
+        WHERE h.teacher_id = #{teacherId}
+        GROUP BY h.id, h.create_time
+        ORDER BY h.create_time DESC
+        LIMIT 5
+    </select>
+
+    <!-- 折线图：近5次作业平均分 -->
+    <select id="getLineData" resultType="com.example.homework.vo.HomeworkLineVO">
+        SELECT
+            h.title AS homeworkName,
+            AVG(hs.total_score) AS avgScore
+        FROM homework h
+                 LEFT JOIN homework_submit hs ON h.id = hs.homework_id
+        WHERE h.teacher_id = #{teacherId}
+        GROUP BY h.id, h.create_time
+        ORDER BY h.create_time DESC
+        LIMIT 5
+    </select>
+
+    <!-- 最近5次作业列表（老师自己发布） -->
+    <select id="getRecentHomework" resultType="com.example.homework.vo.RecentHomeworkVO">
+        SELECT
+            h.title,
+            c.clazz_name AS className,
+            co.course_name AS subject,
+            h.deadline,
+            COUNT(hs.id) AS submitNum,
+            (SELECT COUNT(*) FROM user
+             WHERE role_id=3 AND clazz_id = h.clazz_id) AS totalStudent,
+            AVG(hs.total_score) AS avgScore,
+            CASE
+                WHEN h.deadline > NOW() THEN '进行中'
+                ELSE '已结束'
+                END AS status
+        FROM homework h
+                 LEFT JOIN clazz c ON h.clazz_id = c.id
+                 LEFT JOIN course co ON h.course_id = co.id
+                 LEFT JOIN homework_submit hs ON h.id = hs.homework_id
+        WHERE h.teacher_id = #{teacherId}
+        GROUP BY h.id, h.create_time
+        ORDER BY h.create_time DESC
+        LIMIT 5
+    </select>
+
+</mapper>

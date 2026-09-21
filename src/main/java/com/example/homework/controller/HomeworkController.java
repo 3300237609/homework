@@ -1,16 +1,26 @@
 package com.example.homework.controller;
 
 import com.example.homework.common.R;
+import com.example.homework.dto.HomeworkQueryDTO;
 import com.example.homework.dto.HomeworkSubmitDTO;
 import com.example.homework.dto.QuestionSubmitDTO;
+import com.example.homework.dto.SmartHomeworkDTO;
+import com.example.homework.dto.SubmitWorkDTO;
+import com.example.homework.dto.TeacherCorrectionDTO;
 import com.example.homework.entity.Homework;
+import com.example.homework.entity.HomeworkReport;
+import com.example.homework.mapper.HomeworkReportMapper;
+import com.example.homework.service.AiAnalysisService;
+import com.example.homework.service.CorrectionService;
 import com.example.homework.service.HomeworkService;
+import com.example.homework.service.HomeworkStatService;
 import com.example.homework.service.HomeworkSubmitService;
-import com.example.homework.vo.HomeworkDetailVO;
-import com.example.homework.vo.HomeworkVO;
+import com.example.homework.service.SmartHomeworkService;
+import com.example.homework.vo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 /**
@@ -26,6 +36,16 @@ public class HomeworkController {
     private HomeworkService homeworkService;
     @Autowired
     private HomeworkSubmitService homeworkSubmitService;
+    @Autowired
+    private CorrectionService correctionService;
+    @Autowired
+    private HomeworkStatService homeworkStatService;
+    @Autowired
+    private AiAnalysisService aiAnalysisService;
+    @Autowired
+    private HomeworkReportMapper homeworkReportMapper;
+    @Autowired
+    private SmartHomeworkService smartHomeworkService;
 
     /**
      * 发布新作业（教师）
@@ -129,5 +149,77 @@ public class HomeworkController {
     @PostMapping("/submitWork")
     public R<String> submitWork(@RequestBody HomeworkSubmitDTO homeworkId) {
         return homeworkSubmitService.submitWork(homeworkId.getHomeworkId());
+    }
+    @GetMapping("/Correction/{homeworkId}")
+    public R<HomeworkPendingCorrectionVO> getPendingCorrection(@PathVariable Long homeworkId) {
+        return R.success(correctionService.getPendingCorrection(homeworkId));
+    }
+    @PostMapping("/saveCorrection")
+    public R<String> saveCorrection(@RequestBody TeacherCorrectionDTO dto) {
+        return correctionService.saveCorrection(dto);
+    }
+    @GetMapping("/dashboard")
+    public R<HomeworkStatVO> dashboard() {
+        return homeworkStatService.getDashboardData();
+    }
+    /**
+     * 查询作业下所有学生作答情况
+     * @param queryDTO 前端传入参数DTO
+     * @return 返回VO给前端
+     */
+    @PostMapping("/queryStudentAnswer")
+    public R<HomeworkAnswerVO> queryStudentAnswer(@RequestBody HomeworkQueryDTO queryDTO){
+        return homeworkService.queryStudentAnswer(queryDTO.getHomeworkId());
+    }
+
+    /**
+     * 查询单个学生作业作答详情（含顶部元信息 + 题目列表）
+     * 请求方式：POST
+     * 请求路径：/homework/queryStudentAnswerDetail
+     * 请求体：{homeworkId, studentId}
+     * 返回值：作答详情（作业标题、学生姓名、学号、提交时间、得分、题目列表）
+     */
+    @PostMapping("/queryStudentAnswerDetail")
+    public R<StudentAnswerDetailVO> queryStudentAnswerDetail(@Valid @RequestBody HomeworkQueryDTO queryDTO) {
+        return homeworkService.queryStudentAnswerDetail(queryDTO.getHomeworkId(), queryDTO.getStudentId());
+    }
+
+    /**
+     * AI 智能分析作业情况（Function Calling 自动查询数据库）
+     * 请求方式：POST
+     * 请求路径：/homework/analyze
+     * 请求体：{homeworkId}
+     * 返回值：Markdown 格式的作业分析报告与教学建议
+     */
+    @PostMapping("/analyze")
+    public R<String> analyzeHomework(@RequestBody SubmitWorkDTO dto) {
+        return aiAnalysisService.analyzeHomework(dto.getHomeworkId());
+    }
+
+    /**
+     * 查询作业分析报告记录
+     * 请求方式：POST
+     * 请求路径：/homework/queryHomeworkReport
+     * 请求体：{homeworkId}
+     * 返回值：该作业最新的分析报告（无记录时 data 为 null）
+     */
+    @PostMapping("/queryHomeworkReport")
+    public R<HomeworkReport> queryHomeworkReport(@RequestBody SubmitWorkDTO dto) {
+        if (dto.getHomeworkId() == null) {
+            return R.error("作业ID不能为空！");
+        }
+        return R.success(homeworkReportMapper.selectByHomeworkId(dto.getHomeworkId()));
+    }
+
+    /**
+     * 智能发布作业（AI 按题型比例、难度、题量自动生成题目并发布）
+     * 请求方式：POST
+     * 请求路径：/homework/smartPublish
+     * 请求体：{title,content,clazzId,courseId,deadline,difficulty,questionCount,totalScore,typePercent}
+     * 返回值：发布结果
+     */
+    @PostMapping("/smartPublish")
+    public R<String> smartPublish(@RequestBody SmartHomeworkDTO dto) {
+        return smartHomeworkService.smartPublish(dto);
     }
 }

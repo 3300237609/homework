@@ -37,6 +37,10 @@ public interface UserMapper {
     );
 
     String getNameById(@Param("id") Long id);
+
+    // 根据用户ID查询完整用户信息
+    User selectById(@Param("id") Long id);
+
     // 根据用户id查班级id
     Long getClazzIdByUserId(@Param("userId") Long userId);
 }

@@ -1,5 +1,5 @@
 mybatis:
-  type-aliases-package: com.www.wstore.entity
+  type-aliases-package: com.example.homework.entity
   config-location: classpath:mybatis/mybatis-config.xml
   mapper-locations: classpath:mybatis/mapper/*.xml
 
@@ -29,6 +29,17 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  #springAi配置
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+
+#      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      base-url: https://tokenhub.tencentmaas.com
+      chat:
+        options:
+          model: kimi-k3
+
 #jwt配置
 jwt:
   secret:  dev-secret-key-that-is-at-least-32-bytes-long-123456  # 密钥（建议复杂且保密）
@@ -37,5 +48,7 @@ jwt:
 img:
   storage:
     path: 'src/main/resources/static/img/'
+
+
 
 

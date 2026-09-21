@@ -35,8 +35,9 @@
         WHERE id = #{id}
     </select>
 
-    <!-- 新增题目到题库 -->
-    <insert id="insert" parameterType="com.example.homework.entity.Question">
+    <!-- 新增题目到题库（主键回填） -->
+    <insert id="insert" parameterType="com.example.homework.entity.Question"
+            useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO question(course_id,title,type,options,
         <if test="answer != null">answer,</if>
         score

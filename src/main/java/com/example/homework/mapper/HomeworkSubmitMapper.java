@@ -20,4 +20,5 @@ public interface HomeworkSubmitMapper {
 
     void updateById(HomeworkSubmit homeworkSubmit);
 
+    void addScoreToSubmit(@Param("submitId") Long submitId, @Param("addScore") Integer addScore);
 }

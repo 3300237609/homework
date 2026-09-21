@@ -6,9 +6,12 @@ import com.example.homework.entity.*;
 import com.example.homework.mapper.*;
 import com.example.homework.service.HomeworkService;
 import com.example.homework.utils.PermissionUtil;
+import com.example.homework.vo.HomeworkAnswerVO;
 import com.example.homework.vo.HomeworkDetailVO;
 import com.example.homework.vo.HomeworkQuestionVO;
 import com.example.homework.vo.HomeworkVO;
+import com.example.homework.vo.QuestionCorrectionVO;
+import com.example.homework.vo.StudentAnswerDetailVO;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -313,5 +317,99 @@ public class HomeworkServiceImpl implements HomeworkService {
         }
 
         return R.success(homeworkDetail);
+    }
+    @Override
+    public R<HomeworkAnswerVO> queryStudentAnswer(Long homeworkId) {
+        HomeworkAnswerVO resultVo = new HomeworkAnswerVO();
+
+        // 1. 查询作业基础PO实体
+        Homework homework = homeworkMapper.selectHomeworkById(homeworkId);
+        // PO转VO，封装作业基础信息
+        resultVo.setHomeworkId(homeworkId);
+        resultVo.setHomeworkTitle(homework.getTitle());
+        resultVo.setTotalScore(homework.getTotalScore());
+
+        // 2. 查询该作业班级全部学生+提交记录
+        List<HomeworkAnswerVO.StudentAnswerVO> studentList = homeworkMapper.selectStudentAnswerByHomeworkId(homeworkId);
+
+        // 3. 循环处理学生提交状态
+        for (HomeworkAnswerVO.StudentAnswerVO studentVo : studentList) {
+            if(studentVo.getSubmitTime() == null){
+                // submitTime为null：无提交记录，未作答
+                studentVo.setIsSubmit(false);
+                studentVo.setTotalScore(0);
+                studentVo.setSubmitStatus("未提交");
+            }else{
+                studentVo.setIsSubmit(true);
+                studentVo.setSubmitStatus("已提交");
+            }
+        }
+        resultVo.setStudentList(studentList);
+        return R.success(resultVo);
+    }
+
+    /**
+     * 查询单个学生作业作答详情（含顶部元信息 + 题目列表）
+     * 复用已有 Mapper 组装：Homework / User / HomeworkSubmit / 题目
+     */
+    @Override
+    public R<StudentAnswerDetailVO> queryStudentAnswerDetail(Long homeworkId, Long studentId) {
+        // 1. 参数校验
+        if (homeworkId == null || studentId == null) {
+            return R.error("作业ID和学生ID不能为空！");
+        }
+
+        // 2. 查询作业基础信息（标题、满分）
+        Homework homework = homeworkMapper.selectHomeworkById(homeworkId);
+        if (homework == null) {
+            return R.error("作业不存在！");
+        }
+
+        // 3. 查询学生信息（姓名、学号/账号）
+        User student = userMapper.selectById(studentId);
+        if (student == null) {
+            return R.error("学生不存在！");
+        }
+
+        // 4. 查询提交记录（提交时间、得分）
+        HomeworkSubmit submit = homeworkSubmitMapper.selectByHomeworkAndStudent(homeworkId, studentId);
+
+        // 5. 查询题目列表 + 学生答案 + 批改评语（复用已有 Mapper）
+        List<HomeworkQuestionVO> questionList = homeworkMapper.listHomeworkQuestionDetail(homeworkId, studentId);
+
+        // 6. 转换题目为 QuestionCorrectionVO
+        List<QuestionCorrectionVO> questions = new ArrayList<>();
+        for (HomeworkQuestionVO q : questionList) {
+            QuestionCorrectionVO vo = new QuestionCorrectionVO();
+            vo.setQuestionId(q.getQuestionId());
+            vo.setTitle(q.getTitle());
+            vo.setType(q.getQuestionType());
+            vo.setOptions(q.getOptions());
+            vo.setStudentAnswer(q.getStudentAnswer());
+            vo.setCorrectAnswer(q.getCorrectAnswer());
+            vo.setFullScore(q.getQuestionScore());
+            vo.setStudentScore(q.getQuestionScoreGot());
+            vo.setComment(q.getTeacherComment());
+            questions.add(vo);
+        }
+
+        // 7. 组装最终 VO
+        StudentAnswerDetailVO result = new StudentAnswerDetailVO();
+        result.setHomeworkTitle(homework.getTitle());
+        result.setStudentName(student.getName());
+        result.setStudentNumber(student.getUsername());
+        result.setFullScore(homework.getTotalScore());
+        // 提交记录可能不存在（未提交）
+        if (submit != null) {
+            result.setSubmitTime(submit.getSubmitTime() != null
+                    ? submit.getSubmitTime().toString().replace('T', ' ') : null);
+            result.setTotalScore(submit.getTotalScore());
+        } else {
+            result.setSubmitTime(null);
+            result.setTotalScore(0);
+        }
+        result.setQuestions(questions);
+
+        return R.success(result);
     }
 }

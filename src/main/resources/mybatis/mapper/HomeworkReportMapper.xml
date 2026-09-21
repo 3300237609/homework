@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 作业分析报告记录表 Mapper -->
+<mapper namespace="com.example.homework.mapper.HomeworkReportMapper">
+
+    <!-- 根据作业ID查询分析报告 -->
+    <select id="selectByHomeworkId" parameterType="long"
+            resultType="com.example.homework.entity.HomeworkReport">
+        SELECT *
+        FROM homework_report
+        WHERE homework_id = #{homeworkId}
+        LIMIT 1
+    </select>
+
+    <!-- 新增分析报告（create_time、update_time 走数据库默认值） -->
+    <insert id="insert" parameterType="com.example.homework.entity.HomeworkReport">
+        INSERT INTO homework_report(homework_id, content)
+        VALUES (#{homeworkId}, #{content})
+    </insert>
+
+    <!-- 根据作业ID更新报告内容（update_time 由数据库 ON UPDATE 自动维护） -->
+    <update id="updateByHomeworkId" parameterType="com.example.homework.entity.HomeworkReport">
+        UPDATE homework_report
+        SET content = #{content}
+        WHERE homework_id = #{homeworkId}
+    </update>
+</mapper>

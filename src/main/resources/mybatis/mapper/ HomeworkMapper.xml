@@ -131,7 +131,7 @@
                  LEFT JOIN homework_submit hs ON h.id = hs.homework_id AND hs.student_id = #{studentId}
         WHERE h.id = #{homeworkId}
     </select>
-    <select id="listHomeworkQuestionDetail"  resultType="com.example.homework.vo.HomeworkQuestionVO">
+    <select id="listHomeworkQuestionDetail" resultType="com.example.homework.vo.HomeworkQuestionVO">
         SELECT
             q.id AS questionId,
             hq.homework_id AS homeworkId,
@@ -142,12 +142,14 @@
             q.answer AS correctAnswer,
             hsd.student_answer AS studentAnswer,
             hsd.score AS questionScoreGot,
-            hsd.question_submit_status
+            hsd.question_submit_status,
+            hc.comment AS teacherComment
         FROM homework_question hq
                  JOIN question q ON hq.question_id = q.id
                  LEFT JOIN homework_submit_detail hsd
                            ON hq.question_id = hsd.question_id
                                AND hsd.submit_id = (SELECT id FROM homework_submit WHERE homework_id = #{homeworkId} AND student_id = #{studentId})
+                 LEFT JOIN homework_comment hc ON hsd.id = hc.submit_detail_id
         WHERE hq.homework_id = #{homeworkId}
         ORDER BY hq.sort ASC
     </select>
@@ -167,5 +169,28 @@
     <!-- 统计作业已批改人数 -->
     <select id="getHomeworkCorrectedCount" resultType="java.lang.Integer">
         SELECT COUNT(*) FROM homework_submit WHERE homework_id = #{homeworkId} AND status = '已批改'
+    </select>
+    <!-- 查询作业基础信息，映射PO实体Homework -->
+    <select id="selectHomeworkById" resultType="com.example.homework.entity.Homework">
+        SELECT id, title, total_score
+        FROM homework
+        WHERE id = #{homeworkId}
+    </select>
+
+    <!-- 查询班级全部学生，左连接作业提交记录，映射StudentAnswerVO -->
+    <select id="selectStudentAnswerByHomeworkId" resultType="com.example.homework.vo.HomeworkAnswerVO$StudentAnswerVO">
+        SELECT
+            u.id AS studentId,
+            u.name AS studentName,
+            hs.total_score AS totalScore,
+            DATE_FORMAT(hs.submit_time,'%Y-%m-%d %H:%i:%s') AS submitTime,
+            hs.status
+        FROM user u
+                 LEFT JOIN homework_submit hs
+                           ON hs.student_id = u.id AND hs.homework_id = #{homeworkId}
+        WHERE
+            u.role_id = 3
+          AND u.clazz_id = (SELECT clazz_id FROM homework WHERE id = #{homeworkId})
+        ORDER BY u.name;
     </select>
 </mapper>

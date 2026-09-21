@@ -3,8 +3,10 @@ package com.example.homework.service;
 import com.example.homework.common.R;
 import com.example.homework.entity.Homework;
 import com.example.homework.entity.HomeworkSubmitDetail;
+import com.example.homework.vo.HomeworkAnswerVO;
 import com.example.homework.vo.HomeworkDetailVO;
 import com.example.homework.vo.HomeworkVO;
+import com.example.homework.vo.StudentAnswerDetailVO;
 
 import java.util.List;
 
@@ -74,6 +76,19 @@ public interface HomeworkService {
      * @return 学生视角的作业详情
      */
     R<HomeworkDetailVO> getStudentHomeworkDetail(Long homeworkId);
+    /**
+     * 根据作业ID查询学生作答信息
+     * @param homeworkId 作业id
+     * @return 作业信息+学生提交列表 VO
+     */
+    R<HomeworkAnswerVO> queryStudentAnswer(Long homeworkId);
 
+    /**
+     * 查询单个学生作业作答详情（含顶部元信息+题目列表）
+     * @param homeworkId 作业ID
+     * @param studentId  学生ID
+     * @return 作答详情（含作业标题、学生信息、提交时间、得分、题目列表）
+     */
+    R<StudentAnswerDetailVO> queryStudentAnswerDetail(Long homeworkId, Long studentId);
 
 }

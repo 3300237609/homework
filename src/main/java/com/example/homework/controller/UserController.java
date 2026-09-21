@@ -3,10 +3,10 @@ package com.example.homework.controller;
 import com.example.homework.common.R;
 import com.example.homework.entity.User;
 import com.example.homework.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 
 @RestController

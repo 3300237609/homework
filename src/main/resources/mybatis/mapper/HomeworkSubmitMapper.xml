@@ -12,13 +12,6 @@
         WHERE homework_id = #{homeworkId}
     </select>
 
-    <!-- 根据提交ID 查询单条提交 -->
-    <select id="selectById" parameterType="long" resultType="com.example.homework.entity.HomeworkSubmit">
-        SELECT *
-        FROM homework_submit
-        WHERE id = #{id}
-    </select>
-
     <!-- 学生提交作业 -->
     <insert id="insert" parameterType="com.example.homework.entity.HomeworkSubmit"
             useGeneratedKeys="true"
@@ -28,31 +21,25 @@
         VALUES (#{homeworkId}, #{studentId}, #{status}, #{content})
     </insert>
 
-    <!-- 老师批改后更新总分和状态 -->
-    <update id="updateScore" parameterType="com.example.homework.entity.HomeworkSubmit">
-        UPDATE homework_submit
-        SET total_score=#{totalScore},
-            status=#{status}
-        WHERE id = #{id}
-    </update>
 
-    <!-- 根据作业ID和学生ID查询提交记录 -->
-    <select id="selectByHomeworkIdAndStudentId" resultType="com.example.homework.entity.HomeworkSubmit">
-        SELECT *
-        FROM homework_submit
-        WHERE homework_id = #{homeworkId}
-          AND student_id = #{studentId}
-    </select>
     <select id="selectByHomeworkAndStudent" resultType="com.example.homework.entity.HomeworkSubmit">
         SELECT *
         FROM homework_submit
         WHERE homework_id = #{homeworkId}
           AND student_id = #{studentId}
     </select>
+
     <update id="updateById" parameterType="com.example.homework.entity.HomeworkSubmit">
         UPDATE homework_submit
         SET total_score = #{totalScore},
             status      = #{status}
         WHERE id = #{id}
+    </update>
+
+    <update id="addScoreToSubmit">
+        UPDATE homework_submit
+        SET total_score = homework_submit.total_score + #{addScore},
+            status = '已批改'
+        WHERE id = #{submitId}
     </update>
 </mapper>

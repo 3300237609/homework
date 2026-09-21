@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.homework.mapper.HomeworkCorrectionMapper">
+
+    <resultMap id="HomeworkPendingCorrectionVOMap" type="com.example.homework.vo.HomeworkPendingCorrectionVO">
+        <id column="homework_id" property="homeworkId"/>
+        <result column="homework_title" property="homeworkTitle"/>
+        <result column="homework_content" property="homeworkContent"/>
+        <result column="course_name" property="courseName"/>
+        <result column="clazz_name" property="clazzName"/>
+
+        <collection property="studentList" ofType="com.example.homework.vo.StudentSubmitVO">
+            <id column="submit_id" property="submitId"/>
+            <result column="student_id" property="studentId"/>
+            <result column="student_name" property="studentName"/>
+
+            <collection property="questions" ofType="com.example.homework.vo.QuestionCorrectionVO">
+                <id column="question_id" property="questionId"/>
+                <result column="title" property="title"/>
+                <result column="type" property="type"/>
+                <result column="options" property="options"/>
+                <result column="correct_answer" property="correctAnswer"/>
+                <result column="full_score" property="fullScore"/>
+                <result column="student_answer" property="studentAnswer"/>
+                <result column="student_score" property="studentScore"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="getPendingCorrectionByHomeworkId" resultMap="HomeworkPendingCorrectionVOMap">
+        SELECT
+            h.id AS homework_id,
+            h.title AS homework_title,
+            h.content AS homework_content,
+            c.course_name,
+            cl.clazz_name AS clazz_name,
+
+            hs.id AS submit_id,
+            hs.student_id,
+            u.name AS student_name,
+
+            q.id AS question_id,
+            q.title,
+            q.type,
+            q.options,
+            q.answer AS correct_answer,
+            hq.score AS full_score,
+            hsd.student_answer,
+            hsd.score AS student_score
+        FROM homework h
+                 JOIN course c ON h.course_id = c.id
+                 JOIN clazz cl ON h.clazz_id = cl.id
+
+                 JOIN homework_submit hs ON h.id = hs.homework_id
+                 JOIN user u ON hs.student_id = u.id
+
+                 JOIN homework_question hq ON h.id = hq.homework_id
+                 JOIN question q ON hq.question_id = q.id
+
+                 LEFT JOIN homework_submit_detail hsd
+                           ON hs.id = hsd.submit_id AND hq.question_id = hsd.question_id
+
+        WHERE h.id = #{homeworkId}
+          AND hs.status = '已提交（待批改）'
+          AND hsd.question_submit_status = '已提交（待批改）'
+        ORDER BY hs.id, hq.sort
+    </select>
+    <insert id="insertComment">
+        INSERT INTO homework_comment (submit_detail_id, comment)
+        VALUES (#{submitDetailId}, #{comment})
+    </insert>
+
+</mapper>

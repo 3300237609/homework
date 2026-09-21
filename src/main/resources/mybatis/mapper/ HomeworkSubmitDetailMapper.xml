@@ -28,11 +28,6 @@
                  )
     </insert>
 
-    <update id="updateScore" parameterType="com.example.homework.entity.HomeworkSubmitDetail">
-        UPDATE homework_submit_detail
-        SET score=#{score}, remark=#{remark}
-        WHERE id=#{id}
-    </update>
 
     <select id="selectBySubmitAndQuestion" parameterType="map" resultType="com.example.homework.entity.HomeworkSubmitDetail">
         SELECT * FROM homework_submit_detail
@@ -46,5 +41,15 @@
             score = #{score}
         WHERE id = #{id}
     </update>
+    <select id="getDetailId" resultType="java.lang.Long">
+        SELECT id FROM homework_submit_detail
+        WHERE submit_id = #{submitId} AND question_id = #{questionId}
+    </select>
 
+    <update id="updateDetailScore">
+        UPDATE homework_submit_detail
+        SET score = #{score},
+            question_submit_status = '已批改'
+        WHERE id = #{detailId}
+    </update>
 </mapper>

@@ -10,11 +10,11 @@ import com.example.homework.mapper.UserMapper;
 import com.example.homework.service.UserService;
 import com.example.homework.utils.JwtUtil;
 import com.example.homework.utils.PermissionUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Iterator;
 
