@@ -32,13 +32,13 @@ spring:
   #springAi配置
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY}
-
+#      api-key: ${OPENAI_API_KEY}
+      api-key: sk-ethZkFRYAWE2ZnFYxRXjoRkxgwsAUuycixwEDcPUUofFs1qr
 #      base-url: https://dashscope.aliyuncs.com/compatible-mode
       base-url: https://tokenhub.tencentmaas.com
       chat:
         options:
-          model: kimi-k3
+          model: glm-5
 
 #jwt配置
 jwt:

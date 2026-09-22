@@ -140,32 +140,71 @@ public class HomeworkController {
         return homeworkService.getStudentHomeworkDetail(id);
     }
 
+    /**
+     * 学生提交单个题目作答（逐题提交）
+     * 请求方式：POST
+     * 请求路径：/homework/submit/question
+     * 请求体：QuestionSubmitDTO（作业ID、题目ID、学生答案等）
+     * 返回值：操作结果
+     */
     @PostMapping("/submit/question")
     public R<String> submitQuestion(@RequestBody QuestionSubmitDTO dto
     ) {
         return  homeworkSubmitService.submitQuestion(dto);
     }
 
+    /**
+     * 学生提交整份作业（提交完成后进入待批改状态）
+     * 请求方式：POST
+     * 请求路径：/homework/submitWork
+     * 请求体：HomeworkSubmitDTO（作业ID）
+     * 返回值：操作结果
+     */
     @PostMapping("/submitWork")
     public R<String> submitWork(@RequestBody HomeworkSubmitDTO homeworkId) {
         return homeworkSubmitService.submitWork(homeworkId.getHomeworkId());
     }
+
+    /**
+     * 教师获取作业待批改列表（含学生作答与得分情况）
+     * 请求方式：GET
+     * 请求路径：/homework/Correction/{homeworkId}
+     * 路径参数：homeworkId（作业ID）
+     * 返回值：待批改作业详情
+     */
     @GetMapping("/Correction/{homeworkId}")
     public R<HomeworkPendingCorrectionVO> getPendingCorrection(@PathVariable Long homeworkId) {
         return R.success(correctionService.getPendingCorrection(homeworkId));
     }
+
+    /**
+     * 教师保存批改结果（题目得分、评语、总分）
+     * 请求方式：POST
+     * 请求路径：/homework/saveCorrection
+     * 请求体：TeacherCorrectionDTO（作业ID、学生ID、各题得分与评语）
+     * 返回值：操作结果
+     */
     @PostMapping("/saveCorrection")
     public R<String> saveCorrection(@RequestBody TeacherCorrectionDTO dto) {
         return correctionService.saveCorrection(dto);
     }
+
+    /**
+     * 教师作业数据看板（作业整体统计概览）
+     * 请求方式：GET
+     * 请求路径：/homework/dashboard
+     * 返回值：看板统计数据
+     */
     @GetMapping("/dashboard")
     public R<HomeworkStatVO> dashboard() {
         return homeworkStatService.getDashboardData();
     }
     /**
      * 查询作业下所有学生作答情况
-     * @param queryDTO 前端传入参数DTO
-     * @return 返回VO给前端
+     * 请求方式：POST
+     * 请求路径：/homework/queryStudentAnswer
+     * 请求体：HomeworkQueryDTO（作业ID）
+     * 返回值：作业下所有学生作答情况
      */
     @PostMapping("/queryStudentAnswer")
     public R<HomeworkAnswerVO> queryStudentAnswer(@RequestBody HomeworkQueryDTO queryDTO){

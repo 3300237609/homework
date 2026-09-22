@@ -22,7 +22,13 @@ public class ChatController {
         String reply = chatClient.prompt(message).call().content();
         return R.success(reply);
     }*/
-    // 流式接口
+    /**
+     * AI 流式对话（教师助手，SSE 流式返回）
+     * 请求方式：POST
+     * 请求路径：/ai/chat
+     * 请求体：用户输入消息（String）
+     * 返回值：流式文本（text/event-stream）
+     */
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> streamChat(@RequestBody String msg) {
         return chatClient.prompt(msg)

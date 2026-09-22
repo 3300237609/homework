@@ -144,6 +144,9 @@ public class UserserviceImpl implements UserService {
                 return R.error("权限不足！");
             }
         }
+        if(users.getPassword()!=null){
+            users.setPassword(SecureUtil.md5(users.getPassword()));
+        }
         return userMapper.updateUser(users) ? R.success("更新成功！") : R.error("更新失败！");
     }
 

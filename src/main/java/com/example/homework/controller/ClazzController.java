@@ -15,7 +15,13 @@ public class ClazzController {
     @Autowired
     ClazzService clazzService;
 
-    //GET /list 获取班级列表 分页+筛选
+    /**
+     * 获取班级列表（分页+筛选）
+     * 请求方式：GET
+     * 请求路径：/clazz/list
+     * 请求参数：teacherId（教师ID，可选）、pageNum（页码，默认1）、pageSize（每页条数，默认10）
+     * 返回值：班级列表
+     */
     @GetMapping("/list")
     public R<List<ClazzVo>> getClazzList(
             @RequestParam(required = false, defaultValue = "") Long teacherId,
@@ -25,19 +31,37 @@ public class ClazzController {
         return clazzService.getClazzList(teacherId, pageSize, pageNum);
     };
 
-    //POST /add 新增班级 绑定班主任id
+    /**
+     * 新增班级（绑定班主任ID）
+     * 请求方式：POST
+     * 请求路径：/clazz/add
+     * 请求体：Clazz对象（班级名、班主任ID等）
+     * 返回值：操作结果
+     */
     @PostMapping("/add")
     public R<String> addClazz(@RequestBody Clazz clazz){
         return clazzService.addClazz(clazz);
     }
 
-    //PUT /update 修改班级信息 调整班主任/班级名
+    /**
+     * 修改班级信息（调整班主任/班级名）
+     * 请求方式：PUT
+     * 请求路径：/clazz/update
+     * 请求体：Clazz对象（ID、班级名、班主任ID）
+     * 返回值：操作结果
+     */
     @PutMapping("/update")
     public R<String> updateClazz(@RequestBody Clazz clazz){
         return clazzService.updateClazz(clazz);
     }
 
-    //DELETE /delete/{id} 删除班级 需判断是否有课程/学生关联
+    /**
+     * 删除班级（需判断是否有课程/学生关联）
+     * 请求方式：DELETE
+     * 请求路径：/clazz/delete/{id}
+     * 路径参数：id（班级ID）
+     * 返回值：操作结果
+     */
     @DeleteMapping("/delete/{id}")
     public  R<String> deleteClazz(@PathVariable Long id){
         return clazzService.deleteClazz(id);
